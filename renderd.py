@@ -55,6 +55,7 @@ class ProtocolPacket:
     def __init__(self, version, fields = ""):
         self.version = version
         self.xmlname = ""
+        self.t = 0
         self.x = 0
         self.y = 0
         self.z = 0
@@ -68,6 +69,7 @@ class ProtocolPacket:
 
     def bad_request(self):
         # Check that the requested (x,y,z) is invalid
+        t = self.t
         x = self.x
         y = self.y
         z = self.z
@@ -79,11 +81,12 @@ class ProtocolPacket:
             return True
         if (y < 0) or (y > limit):
             return True
+        # if (t outside of acceptable range) TODO: error check the t query string against available times?
         return False
 
     def meta_tuple(self):
         # This metatile tuple is used to identify duplicate request in the rendering queue
-        return (self.xmlname, self.mx, self.my, self.z)
+        return (self.xmlname, self.t, self.mx, self.my, self.z)
 
 class ProtocolPacketV1(ProtocolPacket):
     def __init__(self):
@@ -150,6 +153,46 @@ class ProtocolPacketV2(ProtocolPacket):
         z = self.z
         xmlname = self.xmlname
         data = struct.pack(self.fields, 2, status, x, y, z, xmlname)
+        try:
+            self.dest.send(data)
+        except socket.error, e:
+               if e[0] != errno.EBADF:
+                   raise
+
+# Version 3 is used for time-based queries in the OHM
+class ProtocolPacketV3(ProtocolPacket):
+    def __init__(self):
+        ProtocolPacket(3)
+        self.fields = "5i41s5s62x"  # for year queries in the range of (-35000, 2014)
+
+    # t is at the end of the unpacked fields to prevent breaking the parser
+    # with additional padding to bring up to 128 bytes
+    def receive(self, data, dest):
+        version, request, x, y, z, xmlname, t = struct.unpack(self.fields, data)
+
+        if version != 3:
+            print "Received V3 packet with incorect version %d" % version
+        else:
+            print "Got V3 request, command(%d), xmlname(%s), t(%s), x(%d), y(%d), z(%d)" \
+                % (request, xmlname, t, x, y, z)
+            self.commandStatus = request
+            self.t = t
+            self.x = x
+            self.y = y
+            self.z = z
+            self.xmlname = xmlname.rstrip('\000') # Remove trailing NULs
+            # Calculate Meta-tile value for this x/y
+            self.mx = x & ~(METATILE-1)
+            self.my = y & ~(METATILE-1)
+            self.dest = dest
+
+    def send(self, status):
+        x = self.t
+        x = self.x
+        y = self.y
+        z = self.z
+        xmlname = self.xmlname
+        data = struct.pack(self.fields, 2, status, t, x, y, z, xmlname)
         try:
             self.dest.send(data)
         except socket.error, e:
@@ -277,7 +320,7 @@ class RenderThread:
 
         return True;
 
-    def xyz_to_meta(self, xmlname, x,y, z):
+    def xyz_to_meta(self, xmlname, t, x,y, z):
         mask = METATILE -1
         x &= ~mask
         y &= ~mask
@@ -288,7 +331,7 @@ class RenderThread:
             x >>= 4
             y >>= 4
 
-        meta = "%s/%s/%d/%u/%u/%u/%u/%u.meta" % (self.tile_path, xmlname, z, hashes[4], hashes[3], hashes[2], hashes[1], hashes[0])
+        meta = "%s/%s/%s/%d/%u/%u/%u/%u/%u.meta" % (self.tile_path, xmlname, t, z, hashes[4], hashes[3], hashes[2], hashes[1], hashes[0])
         return meta
 
     def xyz_to_meta_offset(self, xmlname, x,y, z):
@@ -297,9 +340,9 @@ class RenderThread:
         return offset
 
 
-    def meta_save(self, xmlname, x, y, z, size, tiles):
+    def meta_save(self, xmlname, t, x, y, z, size, tiles):
         #print "Saving %d tiles" % (size * size)
-        meta_path = self.xyz_to_meta(xmlname, x, y, z)
+        meta_path = self.xyz_to_meta(xmlname, t,  x, y, z)
         d = os.path.dirname(meta_path)
         if not os.path.exists(d):
             try:
@@ -476,7 +519,9 @@ class ThreadedUnixStreamHandler(SocketServer.BaseRequestHandler):
         #print "%s: New connection" % cur_thread.getName()
         len_v1 = ProtocolPacketV1().len()
         len_v2 = ProtocolPacketV2().len()
+        len_v3 = ProtocolPacketV3().len()
         max_len = max(len_v1, len_v2)
+        max_len = max(max_len, len_v3)
 
         while True:
             try:
@@ -496,6 +541,10 @@ class ThreadedUnixStreamHandler(SocketServer.BaseRequestHandler):
                 req_v2 = ProtocolPacketV2()
                 req_v2.receive(data, self.request)
                 self.rx_request(req_v2)
+            if len(data) == len_v3:
+                req_v3 = ProtocolPacketV3()
+                req_v2.receive(data, self.request)
+                self.rx_request(req_v3)
             elif len(data) == 0:
                 #print "%s: Connection closed" % cur_thread.getName()
                 break

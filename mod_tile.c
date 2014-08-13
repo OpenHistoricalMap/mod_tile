@@ -202,7 +202,7 @@ static int request_tile(request_rec *r, struct protocol *cmd, int renderImmediat
     }
 
     // cmd has already been partial filled, fill in the rest
-    cmd->ver = PROTO_VER;
+    cmd->ver = PROTO_VER;    // this is set in protocol.h, set to 3 for time queries
     switch (renderImmediately) {
     case 0: { cmd->cmd = cmdDirty; break;}
     case 1: { cmd->cmd = cmdRender; break;}
@@ -211,7 +211,7 @@ static int request_tile(request_rec *r, struct protocol *cmd, int renderImmediat
 
     if (scfg->bulkMode) cmd->cmd = cmdRenderBulk; 
 
-    ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "Requesting style(%s) z(%d) x(%d) y(%d) from renderer with priority %d", cmd->xmlname, cmd->z, cmd->x, cmd->y, cmd->cmd);
+    ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "Requesting style(%s) t(%s) z(%d) x(%d) y(%d) from renderer with priority %d", cmd->xmlname, cmd-> t, cmd->z, cmd->x, cmd->y, cmd->cmd);
     do {
         ret = send(fd, cmd, sizeof(struct protocol), 0);
 
@@ -250,7 +250,7 @@ static int request_tile(request_rec *r, struct protocol *cmd, int renderImmediat
                     break;
                 }
 
-                if (cmd->x == resp.x && cmd->y == resp.y && cmd->z == resp.z && !strcmp(cmd->xmlname, resp.xmlname)) {
+                if (cmd->t == resp.t && cmd->x == resp.x && cmd->y == resp.y && cmd->z == resp.z && !strcmp(cmd->xmlname, resp.xmlname)) {
                     close(fd);
                     if (resp.cmd == cmdDone)
                         return 1;
@@ -258,13 +258,13 @@ static int request_tile(request_rec *r, struct protocol *cmd, int renderImmediat
                         return 0;
                 } else {
                     ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r,
-                       "Response does not match request: xml(%s,%s) z(%d,%d) x(%d,%d) y(%d,%d)", cmd->xmlname,
-                       resp.xmlname, cmd->z, resp.z, cmd->x, resp.x, cmd->y, resp.y);
+                       "Response does not match request: xml(%s,%s) t(%s,%s) z(%d,%d) x(%d,%d) y(%d,%d)", cmd->xmlname,
+                       resp.xmlname, cmd->t, resp.t, cmd->z, resp.z, cmd->x, resp.x, cmd->y, resp.y);
                 }
             } else {
                 ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-                              "request_tile: Request xml(%s) z(%d) x(%d) y(%d) could not be rendered in %i seconds",
-                              cmd->xmlname, cmd->z, cmd->x, cmd->y,
+                              "request_tile: Request xml(%s) t(%s) z(%d) x(%d) y(%d) could not be rendered in %i seconds",
+                              cmd->xmlname, cmd->t, cmd->z, cmd->x, cmd->y,
                               (renderImmediately > 1?scfg->request_timeout_priority:scfg->request_timeout));
                 break;
             }
@@ -346,10 +346,10 @@ static enum tileState tile_state(request_rec *r, struct protocol *cmd)
     struct stat_info stat;
     struct tile_request_data * rdata = (struct tile_request_data *)ap_get_module_config(r->request_config, &tile_module);
 
-    stat = rdata->store->tile_stat(rdata->store, cmd->xmlname, cmd->x, cmd->y, cmd->z);
+    stat = rdata->store->tile_stat(rdata->store, cmd->xmlname, cmd->t, cmd->x, cmd->y, cmd->z);
 
     ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "tile_state: determined state of %s %i %i %i on store %pp: Tile size: %li, expired: %i created: %li",
-                      cmd->xmlname, cmd->x, cmd->y, cmd->z, rdata->store, stat.size, stat.expired, stat.mtime);
+                      cmd->xmlname, cmd->t, cmd->x, cmd->y, cmd->z, rdata->store, stat.size, stat.expired, stat.mtime);
 
     r->finfo.mtime = stat.mtime * 1000000;
     r->finfo.atime = stat.atime * 1000000;
@@ -949,7 +949,7 @@ static int tile_handler_status(request_rec *r)
     state = tile_state(r, cmd);
     if (state == tileMissing)
         return error_message(r, "No tile could not be found at storage location: %s\n",
-                rdata->store->tile_storage_id(rdata->store, cmd->xmlname, cmd->x, cmd->y, cmd->z, storage_id));
+                rdata->store->tile_storage_id(rdata->store, cmd->xmlname, cmd->t, cmd->x, cmd->y, cmd->z, storage_id));
     apr_ctime(mtime_str, r->finfo.mtime);
     apr_ctime(atime_str, r->finfo.atime);
 
@@ -957,7 +957,7 @@ static int tile_handler_status(request_rec *r)
                          "(Dates might not be accurate. Rendering time might be reset to an old date for tile expiry."
                          " Access times might not be updated on all file systems)\n",
                          (state == tileOld) ? "due to be rendered" : "clean", mtime_str, atime_str,
-                         rdata->store->tile_storage_id(rdata->store, cmd->xmlname, cmd->x, cmd->y, cmd->z, storage_id));
+                         rdata->store->tile_storage_id(rdata->store, cmd->xmlname, cmd->t, cmd->x, cmd->y, cmd->z, storage_id));
 }
 
 /**
@@ -1139,7 +1139,7 @@ static int tile_handler_serve(request_rec *r)
         return HTTP_NOT_FOUND;
     }
 
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "tile_handler_serve: xml(%s) z(%d) x(%d) y(%d)", cmd->xmlname, cmd->z, cmd->x, cmd->y);
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "tile_handler_serve: xml(%s) t(%s) z(%d) x(%d) y(%d)", cmd->xmlname, cmd->t, cmd->z, cmd->x, cmd->y);
 
     tile_configs = (tile_config_rec *) scfg->configs->elts;
 
@@ -1162,9 +1162,9 @@ static int tile_handler_serve(request_rec *r)
 
     err_msg[0] = 0;
 
-    len = rdata->store->tile_read(rdata->store, cmd->xmlname, cmd->x, cmd->y, cmd->z, buf, tile_max, &compressed, err_msg);
+    len = rdata->store->tile_read(rdata->store, cmd->xmlname, cmd->t, cmd->x, cmd->y, cmd->z, buf, tile_max, &compressed, err_msg);
     ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-                  "Read tile of length %i from %s: %s", len, rdata->store->tile_storage_id(rdata->store, cmd->xmlname, cmd->x, cmd->y, cmd->z, id), err_msg);
+                  "Read tile of length %i from %s: %s", len, rdata->store->tile_storage_id(rdata->store, cmd->xmlname, cmd->t, cmd->x, cmd->y, cmd->z, id), err_msg);
     if (len > 0) {
         if (compressed) {
             const char* accept_encoding = apr_table_get(r->headers_in,"Accept-Encoding");
@@ -1269,7 +1269,7 @@ static int tile_translate(request_rec *r)
                 return OK;
             }
 
-            n = sscanf(r->uri+strlen(tile_config->baseuri),"%d/%d/%d.%[a-z]/%10s", &(cmd->z), &(cmd->x), &(cmd->y), extension, option);
+            n = sscanf(r->uri+strlen(tile_config->baseuri),"%s/%d/%d/%d.%[a-z]/%10s", &(cmd->t), &(cmd->z), &(cmd->x), &(cmd->y), extension, option);
             if (n < 4) {
                 ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "tile_translate: Invalid URL for tilelayer %s", tile_config->xmlname);
                 return DECLINED;
@@ -1322,8 +1322,8 @@ static int tile_translate(request_rec *r)
                 r->handler = "tile_serve";
             }
 
-            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "tile_translate: op(%s) xml(%s) mime(%s) z(%d) x(%d) y(%d)",
-                    r->handler , cmd->xmlname, tile_config->mimeType, cmd->z, cmd->x, cmd->y);
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "tile_translate: op(%s) xml(%s) mime(%s) t(%s) z(%d) x(%d) y(%d)",
+                    r->handler , cmd->xmlname, tile_config->mimeType, cmd->t, cmd->z, cmd->x, cmd->y);
 
             return OK;
         }

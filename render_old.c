@@ -110,6 +110,7 @@ static void descend(const char *search)
     char path[PATH_MAX];
     char mapname[XMLCONFIG_MAX];
     int x, y, z;
+    char * t;
 
     if (!tiles) {
         fprintf(stderr, "Unable to open directory: %s\n", search);
@@ -136,8 +137,8 @@ static void descend(const char *search)
             num_all++;
             if (planetTime > b.st_mtime) {
                 // request rendering of  old tile
-                path_to_xyz(tile_dir, path, mapname, &x, &y, &z);
-                enqueue(mapname, x, y, z);
+                path_to_xyz(tile_dir, path, mapname, t, &x, &y, &z);
+                enqueue(mapname, t, x, y, z);
             }
         }
     }

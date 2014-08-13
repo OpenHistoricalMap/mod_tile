@@ -16,7 +16,7 @@ extern "C" {
  * causing responses to get slightly out of step with requests.
  */
 #define TILE_PATH_MAX (256)
-#define PROTO_VER (2)
+#define PROTO_VER (3)   // hard-coded to 3 to allow for time queries
 #define RENDER_SOCKET "/var/run/renderd/renderd.sock"
 #define XMLCONFIG_MAX 41
 

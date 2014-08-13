@@ -240,7 +240,7 @@ int main(int argc, char **argv)
                 for (y=minY; y <= current_maxY; y+=METATILE) {
                     if (!force) s = store->tile_stat(store, mapname, x, y, z);
                     if (force || (s.size < 0) || (s.expired)) {
-                        enqueue(mapname, x, y, z);
+                        enqueue(mapname, t, x, y, z);
                         num_render++;
                     }
                     num_all++;

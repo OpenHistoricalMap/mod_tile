@@ -52,7 +52,8 @@ const std::string metaTile::get(int x, int y) {
     return tile[x][y];
 }
 
-// Returns the offset within the meta-tile index table
+// Returns the offset within the meta-tile index
+// No need to ref t here - all tiles in the meta tile will be of the same t
 int metaTile::xyz_to_meta_offset(int x, int y, int z) {
     unsigned char mask = METATILE - 1;
     return (x & mask) * METATILE + (y & mask);

@@ -26,7 +26,7 @@
 
 
 #ifdef HAVE_LIBMEMCACHED
-static char * memcached_xyz_to_storagekey(const char *xmlconfig, int x, int y, int z, char * key) {
+static char * memcached_xyz_to_storagekey(const char *xmlconfig, char *t, int x, int y, int z, char * key) {
     int mask;
 
     mask = METATILE - 1;
@@ -54,7 +54,7 @@ static int memcached_tile_read(struct storage_backend * store, const char *xmlco
     mask = METATILE - 1;
     meta_offset = (x & mask) * METATILE + (y & mask);
 
-    memcached_xyz_to_storagekey(xmlconfig, x, y, z, meta_path);
+    memcached_xyz_to_storagekey(xmlconfig, t, x, y, z, meta_path);
     buf_raw = memcached_get(store->storage_ctx, meta_path, strlen(meta_path), &len, &flags, &rc);
 
     if (rc != MEMCACHED_SUCCESS) {
@@ -111,7 +111,7 @@ static struct stat_info memcached_tile_stat(struct storage_backend * store, cons
     mask = METATILE - 1;
     offset = (x & mask) * METATILE + (y & mask);
 
-    memcached_xyz_to_storagekey(xmlconfig, x, y, z, meta_path);
+    memcached_xyz_to_storagekey(xmlconfig, t, x, y, z, meta_path);
     buf = memcached_get(store->storage_ctx, meta_path, strlen(meta_path), &len, &flags, &rc);
 
     if (rc != MEMCACHED_SUCCESS) {
@@ -180,7 +180,7 @@ static int memcached_metatile_delete(struct storage_backend * store, const char 
     char meta_path[PATH_MAX];
     memcached_return_t rc;
 
-    memcached_xyz_to_storagekey(xmlconfig, x, y, z, meta_path);
+    memcached_xyz_to_storagekey(xmlconfig, t, x, y, z, meta_path);
 
     rc = memcached_delete(store->storage_ctx, meta_path, strlen(meta_path), 0);
 
@@ -200,7 +200,7 @@ static int memcached_metatile_expire(struct storage_backend * store, const char 
     uint64_t cas;
     memcached_return_t rc;
 
-    memcached_xyz_to_storagekey(xmlconfig, x, y, z, meta_path);
+    memcached_xyz_to_storagekey(xmlconfig, t, x, y, z, meta_path);
     buf = memcached_get(store->storage_ctx, meta_path, strlen(meta_path), &len, &flags, &rc);
 
     if (rc != MEMCACHED_SUCCESS) {

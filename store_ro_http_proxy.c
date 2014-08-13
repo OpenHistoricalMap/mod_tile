@@ -26,6 +26,7 @@ static int done_global_init = 0;
 struct tile_cache {
     struct stat_info st_stat;
     char * tile;
+    char * t;
     int x,y,z;
     char xmlname[XMLCONFIG_MAX];
 };
@@ -58,12 +59,12 @@ static size_t write_memory_callback(void *contents, size_t size, size_t nmemb, v
   return realsize;
 }
 
-static char * ro_http_proxy_xyz_to_storagekey(struct storage_backend * store, int x, int y, int z, char * key) {
+static char * ro_http_proxy_xyz_to_storagekey(struct storage_backend * store, char *t, int x, int y, int z, char * key) {
     snprintf(key,PATH_MAX - 1, "http://%s/%i/%i/%i.png", ((struct ro_http_proxy_ctx *) (store->storage_ctx))->baseurl, z, x, y);
     return key;
 }
 
-static int ro_http_proxy_tile_retrieve(struct storage_backend * store, const char *xmlconfig, int x, int y, int z) {
+static int ro_http_proxy_tile_retrieve(struct storage_backend * store, const char *xmlconfig, char *t, int x, int y, int z) {
     struct ro_http_proxy_ctx * ctx = (struct ro_http_proxy_ctx *)(store->storage_ctx);
     char * path;
     CURLcode res;
@@ -80,7 +81,7 @@ static int ro_http_proxy_tile_retrieve(struct storage_backend * store, const cha
         chunk.size = 0;
         path = malloc(PATH_MAX);
 
-        ro_http_proxy_xyz_to_storagekey(store, x, y, z, path);
+        ro_http_proxy_xyz_to_storagekey(store, t, x, y, z, path);
         log_message(STORE_LOGLVL_DEBUG, "ro_http_proxy_tile_fetch: proxing file %s", path);
         curl_easy_setopt(ctx->ctx, CURLOPT_URL, path);
 
@@ -129,10 +130,10 @@ static int ro_http_proxy_tile_retrieve(struct storage_backend * store, const cha
     }
 }
 
-static int ro_http_proxy_tile_read(struct storage_backend * store, const char *xmlconfig, int x, int y, int z, char *buf, size_t sz, int * compressed, char * log_msg) {
+static int ro_http_proxy_tile_read(struct storage_backend * store, const char *xmlconfig, char *t, int x, int y, int z, char *buf, size_t sz, int * compressed, char * log_msg) {
     struct ro_http_proxy_ctx * ctx = (struct ro_http_proxy_ctx *)(store->storage_ctx);
 
-    if (ro_http_proxy_tile_retrieve(store, xmlconfig, x, y, z) > 0) {
+    if (ro_http_proxy_tile_retrieve(store, xmlconfig, t, x, y, z) > 0) {
         if (ctx->cache.st_stat.size > sz) {
             log_message(STORE_LOGLVL_ERR, "ro_http_proxy_tile_read: size was too big, overrun %i %i", sz, ctx->cache.st_stat.size);
             return -1;
@@ -145,11 +146,11 @@ static int ro_http_proxy_tile_read(struct storage_backend * store, const char *x
     }
 }
 
-static struct stat_info ro_http_proxy_tile_stat(struct storage_backend * store, const char *xmlconfig, int x, int y, int z) {
+static struct stat_info ro_http_proxy_tile_stat(struct storage_backend * store, const char *xmlconfig, char *t, int x, int y, int z) {
     struct stat_info tile_stat;
     struct ro_http_proxy_ctx * ctx = (struct ro_http_proxy_ctx *)(store->storage_ctx);
 
-    if (ro_http_proxy_tile_retrieve(store, xmlconfig, x, y, z) > 0) {
+    if (ro_http_proxy_tile_retrieve(store, xmlconfig, t, x, y, z) > 0) {
         return ctx->cache.st_stat;
     } else {
         tile_stat.size = -1;
@@ -162,23 +163,23 @@ static struct stat_info ro_http_proxy_tile_stat(struct storage_backend * store, 
 }
 
 
-static char * ro_http_proxy_tile_storage_id(struct storage_backend * store, const char *xmlconfig, int x, int y, int z, char * string) {
+static char * ro_http_proxy_tile_storage_id(struct storage_backend * store, const char *xmlconfig, char *t, int x, int y, int z, char * string) {
 
-    return ro_http_proxy_xyz_to_storagekey(store, x, y, z, string);
+    return ro_http_proxy_xyz_to_storagekey(store, t, x, y, z, string);
 }
 
-static int ro_http_proxy_metatile_write(struct storage_backend * store, const char *xmlconfig, int x, int y, int z, const char *buf, int sz) {
+static int ro_http_proxy_metatile_write(struct storage_backend * store, const char *xmlconfig, char *t, int x, int y, int z, const char *buf, int sz) {
     log_message(STORE_LOGLVL_ERR, "ro_http_proxy_metatile_write: This is a readonly storage backend. Write functionality isn't implemented");
     return -1;
 }
 
 
-static int ro_http_proxy_metatile_delete(struct storage_backend * store, const char *xmlconfig, int x, int y, int z) {
+static int ro_http_proxy_metatile_delete(struct storage_backend * store, const char *xmlconfig, char *t, int x, int y, int z) {
     log_message(STORE_LOGLVL_ERR, "ro_http_proxy_metatile_expire: This is a readonly storage backend. Write functionality isn't implemented");
     return -1;
 }
 
-static int ro_http_proxy_metatile_expire(struct storage_backend * store, const char *xmlconfig, int x, int y, int z) {
+static int ro_http_proxy_metatile_expire(struct storage_backend * store, const char *xmlconfig, char *t, int x, int y, int z) {
 
     log_message(STORE_LOGLVL_ERR, "ro_http_proxy_metatile_expire: This is a readonly storage backend. Write functionality isn't implemented");
     return -1;

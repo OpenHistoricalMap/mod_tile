@@ -7,7 +7,7 @@ extern "C" {
 
 int work_complete;
 
-void enqueue(const char *xmlname, int x, int y, int z);
+void enqueue(const char *xmlname, char *t, int x, int y, int z);
 void spawn_workers(int num, const char *socketpath, int maxLoad);
 void wait_for_empty_queue();
 void finish_workers();

@@ -19,14 +19,14 @@ int mkdirp(const char *path);
  * The two must both agree on the file layout for meta-tiling
  * to work
  */
-void xyz_to_path(char *path, size_t len, const char *tile_dir, const char *xmlconfig, int x, int y, int z);
+void xyz_to_path(char *path, size_t len, const char *tile_dir, const char *xmlconfig, char *t, int x, int y, int z);
 
-int path_to_xyz(const char *tilepath, const char *path, char *xmlconfig, int *px, int *py, int *pz);
+int path_to_xyz(const char *tilepath, const char *path, char *xmlconfig, char *t, int *px, int *py, int *pz);
 
 #ifdef METATILE
 /* New meta-tile storage functions */
 /* Returns the path to the meta-tile and the offset within the meta-tile */
-int xyz_to_meta(char *path, size_t len, const char *tile_dir, const char *xmlconfig, int x, int y, int z);
+int xyz_to_meta(char *path, size_t len, const char *tile_dir, const char *xmlconfig, char *t, int x, int y, int z);
 #endif
 
 #ifdef __cplusplus

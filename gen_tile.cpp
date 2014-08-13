@@ -240,7 +240,7 @@ static enum protoCmd render(Map &m, const char *tile_dir, char *xmlname, project
     mapnik::agg_renderer<mapnik::image_32> ren(m,buf);
     ren.apply();
 
-    xyz_to_path(filename, sizeof(filename), tile_dir, xmlname, x, y, z);
+    xyz_to_path(filename, sizeof(filename), tile_dir, xmlname, t, x, y, z);
     if (mkdirp(filename))
         return cmdNotDone;
     snprintf(tmp, sizeof(tmp), "%s.tmp", filename);

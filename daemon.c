@@ -93,7 +93,8 @@ enum protoCmd rx_request(const struct protocol *req, int fd)
         reqnew->xmlname[0] = 0;
         req = reqnew;
     }
-    else if (req->ver != 2) {
+    // Version 3 of the protocol is for time queries TODO: Determine if we really want to do this here. Should it branch??
+    else if (req->ver != 2 && req->ver != 3) {
         syslog(LOG_ERR, "Bad protocol version %d", req->ver);
         return cmdIgnore;
     }
