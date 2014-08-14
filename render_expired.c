@@ -112,6 +112,7 @@ int main(int argc, char **argv)
 {
     char *spath = strdup(RENDER_SOCKET);
     char *mapname = XMLCONFIG_DEFAULT;
+    char * t;
     int x, y, z;
     struct timeval start, end;
     int num_render = 0, num_all = 0, num_read = 0, num_ignore = 0, num_unlink = 0, num_touch = 0;

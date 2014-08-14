@@ -162,7 +162,7 @@ static void load_fonts(const char *font_dir, int recurse)
 static int check_xyz(int x, int y, int z, struct xmlmapconfig * map) {
     int oob, limit;
 
-    // Validate tile co-ordinates
+    // Validate tile co-ordinates TODO: decide if validation check for time happens here, UI or DB layer
     oob = (z < map->minzoom || z > map->maxzoom);
     if (!oob) {
          // valid x/y for tiles are 0 ... 2^zoom-1
