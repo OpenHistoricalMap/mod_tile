@@ -343,23 +343,23 @@ void *render_thread(void * arg)
                             gettimeofday(&tim, NULL);
                             long t1=tim.tv_sec*1000+(tim.tv_usec/1000);
 
-                            struct stat_info sinfo = maps[i].store->tile_stat(maps[i].store, req->xmlname, item->mx, item->my, req->z);
+                            struct stat_info sinfo = maps[i].store->tile_stat(maps[i].store, req->xmlname, req->t, item->mx, item->my, req->z);
 
                             if(sinfo.size > 0)
-                                syslog(LOG_DEBUG, "DEBUG: START TILE %s %d %d-%d %d-%d, age %.2f days",
-                                       req->xmlname, req->z, item->mx, item->mx+size-1, item->my, item->my+size-1,
+                                syslog(LOG_DEBUG, "DEBUG: START TILE %s %s %d %d-%d %d-%d, age %.2f days",
+                                       req->xmlname, req->t, req->z, item->mx, item->mx+size-1, item->my, item->my+size-1,
                                        (tim.tv_sec-sinfo.mtime)/86400.0);
                             else
-                                syslog(LOG_DEBUG, "DEBUG: START TILE %s %d %d-%d %d-%d, new metatile",
-                                       req->xmlname, req->z, item->mx, item->mx+size-1, item->my, item->my+size-1);
+                                syslog(LOG_DEBUG, "DEBUG: START TILE %s %s %d %d-%d %d-%d, new metatile",
+                                       req->xmlname, req->t, req->z, item->mx, item->mx+size-1, item->my, item->my+size-1);
 
-                            ret = render(&(maps[i]), item->mx, item->my, req->z, tiles);
+                            ret = render(&(maps[i]), req->t, item->mx, item->my, req->z, tiles);
 
                             gettimeofday(&tim, NULL);
                             long t2=tim.tv_sec*1000+(tim.tv_usec/1000);
 
-                            syslog(LOG_DEBUG, "DEBUG: DONE TILE %s %d %d-%d %d-%d in %.3lf seconds",
-                                    req->xmlname, req->z, item->mx, item->mx+size-1, item->my, item->my+size-1, (t2 - t1)/1000.0);
+                            syslog(LOG_DEBUG, "DEBUG: DONE TILE %s %s %d %d-%d %d-%d in %.3lf seconds",
+                                    req->xmlname, req->t, req->z, item->mx, item->mx+size-1, item->my, item->my+size-1, (t2 - t1)/1000.0);
 
                             render_time = t2 - t1;
 
@@ -377,14 +377,14 @@ void *render_thread(void * arg)
 #endif
                             }
 #else
-                        ret = render(maps[i].map, maps[i].tile_dir, req->xmlname, maps[i].prj, req->x, req->y, req->z);
+                        ret = render(maps[i].map, maps[i].tile_dir, req->xmlname, maps[i].prj, req->t, req->x, req->y, req->z);
 #ifdef HTCP_EXPIRE_CACHE
-                        cache_expire(maps[i].htcpsock,maps[i].host, maps[i].xmluri, req->x,req->y,req->z);
+                        cache_expire(maps[i].htcpsock,maps[i].host, maps[i].xmluri, req->t, req->x,req->y,req->z);
 #endif
 #endif
                         } else {
-                            syslog(LOG_WARNING, "Received request for map layer %s is outside of acceptable bounds z(%i), x(%i), y(%i)",
-                                    req->xmlname, req->z, req->x, req->y);
+                            syslog(LOG_WARNING, "Received request for map layer %s is outside of acceptable bounds t(%s), z(%i), x(%i), y(%i)",
+                                    req->xmlname,req->t, req->z, req->x, req->y);
                             ret = cmdIgnore;
                         }
                     } else {

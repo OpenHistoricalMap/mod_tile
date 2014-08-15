@@ -39,6 +39,15 @@ struct protocol_v1 {
     int z;
 };
 
+struct protocol_v3 {
+    int ver;
+    enum protoCmd cmd;
+    char *t;
+    int x;
+    int y;
+    int z;
+};
+
 #ifdef __cplusplus
 }
 #endif
