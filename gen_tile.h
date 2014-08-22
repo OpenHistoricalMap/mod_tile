@@ -14,6 +14,7 @@ struct item {
     struct item *next;
     struct item *prev;
     struct protocol req;
+    char *t;
     int mx, my;
     int fd;
     struct item *duplicates;
