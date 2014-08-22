@@ -65,7 +65,7 @@ int mkdirp(const char *path) {
  * to work
  */
 
-static int check_xyz(int x, int y, int z) {
+static int check_xyz(char *t, int x, int y, int z) {
     int oob, limit;
 
     // Validate tile co-ordinates
@@ -132,16 +132,16 @@ int path_to_xyz(const char *tilepath, const char *path, char *xmlconfig, char *t
         z = *pz;
         *px = x;
         *py = y;
-        return check_xyz(x, y, z);
+        return check_xyz(t, x, y, z);
     }
 #else
     int n;
-    n = sscanf(path, TILE_PATH "/%40[^/]/%d/%d/%d", xmlconfig, pz, px, py);
+    n = sscanf(path, TILE_PATH "/%40[^/]/%s/%d/%d/%d", xmlconfig, t, pz, px, py);
     if (n != 4) {
         fprintf(stderr, "Failed to parse tile path: %s\n", path);
         return 1;
     } else {
-        return check_xyz(*px, *py, *pz);
+        return check_xyz(*t, *px, *py, *pz);
     }
 #endif
 }

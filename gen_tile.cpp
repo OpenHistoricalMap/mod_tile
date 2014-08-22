@@ -159,7 +159,7 @@ static void load_fonts(const char *font_dir, int recurse)
 
 
 
-static int check_xyz(int x, int y, int z, struct xmlmapconfig * map) {
+static int check_xyz(char *t, int x, int y, int z, struct xmlmapconfig * map) {
     int oob, limit;
 
     // Validate tile co-ordinates TODO: decide if validation check for time happens here, UI or DB layer
@@ -335,7 +335,7 @@ void *render_thread(void * arg)
             for (i = 0; i < iMaxConfigs; ++i) {
                 if (!strcmp(maps[i].xmlname, req->xmlname)) {
                     if (maps[i].ok) {
-                        if (check_xyz(item->mx, item->my, req->z, &(maps[i]))) {
+                        if (check_xyz(item->t, item->mx, item->my, req->z, &(maps[i]))) {
 
                             metaTile tiles(req->xmlname, item->mx, item->my, req->z);
 
