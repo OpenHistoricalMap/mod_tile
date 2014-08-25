@@ -176,6 +176,7 @@ int main(int argc, char **argv)
     struct timeval start_all, end_all;
     int num, num_all = 0;
     const char * mapname = "default";
+    char * t = "2014";
     int verbose = 0;
     int numThreads = 1;
 
@@ -235,7 +236,7 @@ int main(int argc, char **argv)
 
     printf("Initial startup costs\n");
     gettimeofday(&start, NULL);
-    enqueue(mapname, 0, 0, 0);
+    enqueue(mapname, t, 0, 0, 0);
     gettimeofday(&end, NULL);
     display_rate(start, end, 1);
 
@@ -269,7 +270,7 @@ int main(int argc, char **argv)
 
         for (x=xmin; x<=xmax; x++) {
             for (y=ymin; y<=ymax; y++) {
-                enqueue(mapname, x, y, z);
+                enqueue(mapname, t, x, y, z);
             }
         }
         wait_for_empty_queue();

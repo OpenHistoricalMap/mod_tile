@@ -113,7 +113,7 @@ int path_to_xyz(const char *tilepath, const char *path, char *xmlconfig, char *t
         return 1;
     }
 
-    n = sscanf(path+i, "/%40[^/]/%d/%s/%d/%d/%d/%d/%d", xmlconfig, t, pz, &hash[0], &hash[1], &hash[2], &hash[3], &hash[4]);
+    n = sscanf(path+i, "/%40[^/]/%s/%d/%d/%d/%d/%d/%d", xmlconfig, t, pz, &hash[0], &hash[1], &hash[2], &hash[3], &hash[4]);
     if (n != 7) {
         fprintf(stderr, "Failed to parse tile path: %s\n", path);
         return 1;

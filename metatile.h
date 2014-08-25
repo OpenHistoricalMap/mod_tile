@@ -22,6 +22,7 @@ extern "C" {
         char magic[4];
         int count; // METATILE ^ 2
         int x, y, z; // lowest x,y of this metatile, plus z
+        char *t;
         struct entry index[]; // count entries
         // Followed by the tile data
         // The index offsets are measured from the start of the file
@@ -33,15 +34,16 @@ extern "C" {
 
 class metaTile {
  public:
-    metaTile(const std::string &xmlconfig, int x, int y, int z);
+    metaTile(const std::string &xmlconfig, char *t, int x, int y, int z);
     void clear();
     void set(int x, int y, const std::string &data);
     const std::string get(int x, int y);
-    int xyz_to_meta_offset(int x, int y, int z);
+    int xyz_to_meta_offset(char *t, int x, int y, int z);
     void save(struct storage_backend * store);
     void expire_tiles(int sock, char * host, char * uri);
  private:
     int x_, y_, z_;
+    char *t_;
     std::string xmlconfig_;
     std::string tile[METATILE][METATILE];
     static const int header_size = sizeof(struct meta_layout) + (sizeof(struct entry) * (METATILE * METATILE));

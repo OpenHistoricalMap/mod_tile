@@ -25,6 +25,7 @@ enum protoCmd { cmdIgnore, cmdRender, cmdDirty, cmdDone, cmdNotDone, cmdRenderPr
 struct protocol {
     int ver;
     enum protoCmd cmd;
+    char t[5];
     int x;
     int y;
     int z;
@@ -34,6 +35,7 @@ struct protocol {
 struct protocol_v1 {
     int ver;
     enum protoCmd cmd;
+    char t[5];
     int x;
     int y;
     int z;
@@ -42,7 +44,7 @@ struct protocol_v1 {
 struct protocol_v3 {
     int ver;
     enum protoCmd cmd;
-    char *t;
+    char t[5];
     int x;
     int y;
     int z;

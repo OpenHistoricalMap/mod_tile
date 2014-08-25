@@ -352,7 +352,7 @@ int main(int argc, char **argv)
                 {
                     if (verbose)
                         printf("deleting: %s\n", store->tile_storage_id(store, mapname, t, x, y, z, name));
-                    store->metatile_delete(store, mapname, x, y, z);
+                    store->metatile_delete(store, mapname, t, x, y, z);
                     num_unlink++;
                 }
                 else if (touchFrom != -1 && z >= touchFrom)
@@ -386,7 +386,7 @@ int main(int argc, char **argv)
             else
             {
                 if (verbose)
-                    printf("not on disk: %s\n", store->tile_storage_id(store, mapname, x, y, z, name));
+                    printf("not on disk: %s\n", store->tile_storage_id(store, mapname, t, x, y, z, name));
                 num_ignore++;
             }
         }

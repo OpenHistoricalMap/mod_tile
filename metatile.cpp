@@ -33,8 +33,8 @@
 #include "request_queue.h"
 
 
-metaTile::metaTile(const std::string &xmlconfig, int x, int y, int z):
-    x_(x), y_(y), z_(z), xmlconfig_(xmlconfig) {
+metaTile::metaTile(const std::string &xmlconfig, char *t, int x, int y, int z):
+    t_(t),x_(x), y_(y), z_(z), xmlconfig_(xmlconfig) {
     clear();
 }
 
@@ -53,8 +53,7 @@ const std::string metaTile::get(int x, int y) {
 }
 
 // Returns the offset within the meta-tile index
-// No need to ref t here - all tiles in the meta tile will be of the same t
-int metaTile::xyz_to_meta_offset(int x, int y, int z) {
+int metaTile::xyz_to_meta_offset(char *t, int x, int y, int z) {
     unsigned char mask = METATILE - 1;
     return (x & mask) * METATILE + (y & mask);
 }
@@ -85,7 +84,7 @@ void metaTile::save(struct storage_backend * store) {
     // Generate offset table
     for (ox=0; ox < limit; ox++) {
         for (oy=0; oy < limit; oy++) {
-            int mt = xyz_to_meta_offset(x_ + ox, y_ + oy, z_);
+            int mt = xyz_to_meta_offset(t_, x_ + ox, y_ + oy, z_);
             offsets[mt].offset = offset;
             offsets[mt].size   = tile[ox][oy].size();
             offset += offsets[mt].size;
@@ -100,12 +99,12 @@ void metaTile::save(struct storage_backend * store) {
     // Write tiles
     for (ox=0; ox < limit; ox++) {
         for (oy=0; oy < limit; oy++) {
-            memcpy(metatilebuffer + offsets[xyz_to_meta_offset(x_ + ox, y_ + oy, z_)].offset, (const void *)tile[ox][oy].data(), tile[ox][oy].size());
+            memcpy(metatilebuffer + offsets[xyz_to_meta_offset(t_, x_ + ox, y_ + oy, z_)].offset, (const void *)tile[ox][oy].data(), tile[ox][oy].size());
         }
     }
     
-    if (store->metatile_write(store, xmlconfig_.c_str(),x_,y_,z_,metatilebuffer, offset) != offset) {
-        syslog(LOG_WARNING, "Failed to write metatile to %s", store->tile_storage_id(store, xmlconfig_.c_str(),x_,y_,z_, tmp));
+    if (store->metatile_write(store, xmlconfig_.c_str(), t_,x_,y_,z_,metatilebuffer, offset) != offset) {
+        syslog(LOG_WARNING, "Failed to write metatile to %s", store->tile_storage_id(store, xmlconfig_.c_str(),t_,x_,y_,z_, tmp));
     }
     
     free(metatilebuffer);

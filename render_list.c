@@ -61,6 +61,7 @@ int main(int argc, char **argv)
     char *spath = strdup(RENDER_SOCKET);
     char *mapname = XMLCONFIG_DEFAULT;
     int minX=-1, maxX=-1, minY=-1, maxY=-1;
+    char *t;
     int x, y, z;
     char name[PATH_MAX];
     struct timeval start, end;
@@ -238,7 +239,7 @@ int main(int argc, char **argv)
             printf("Rendering all tiles for zoom %d from (%d, %d) to (%d, %d)\n", z, minX, minY, current_maxX, current_maxY);
             for (x=minX; x <= current_maxX; x+=METATILE) {
                 for (y=minY; y <= current_maxY; y+=METATILE) {
-                    if (!force) s = store->tile_stat(store, mapname, x, y, z);
+                    if (!force) s = store->tile_stat(store, mapname, t, x, y, z);
                     if (force || (s.size < 0) || (s.expired)) {
                         enqueue(mapname, t, x, y, z);
                         num_render++;
@@ -275,11 +276,11 @@ int main(int argc, char **argv)
 
             num_all++;
 
-            if (!force) s = store->tile_stat(store, mapname, x, y, z);
+            if (!force) s = store->tile_stat(store, mapname, t, x, y, z);
             if (force || (s.size < 0) || (s.expired)) {
                 // missing or old, render it
                 //ret = process_loop(fd, mapname, x, y, z);
-                enqueue(mapname, x, y, z);
+                enqueue(mapname, t, x, y, z);
                 num_render++;
                 // Attempts to adjust the stats for the QMAX tiles which are likely in the queue
                 if (!(num_render % 10)) {
@@ -294,7 +295,7 @@ int main(int argc, char **argv)
                 }
             } else {
                 if (verbose)
-                    printf("Tile %s is clean, ignoring\n", store->tile_storage_id(store, mapname, x, y, z, name));
+                    printf("Tile %s is clean, ignoring\n", store->tile_storage_id(store, mapname, t, x, y, z, name));
             }
         }
     }

@@ -47,6 +47,8 @@
 #define NO_TEST_REPEATS 100
 #define NO_THREADS 100
 
+char t[5] = "2014";
+
 std::string get_current_stderr() {
     FILE * input = fopen("stderr.out", "r+");
     std::string log_lines;
@@ -491,7 +493,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         store = init_storage_backend(tile_dir);
         REQUIRE( store != NULL );
         
-        sinfo = store->tile_stat(store, "default", 0, 0, 0);
+        sinfo = store->tile_stat(store, "default", t, 0, 0, 0);
         REQUIRE( sinfo.size < 0 );
         store->close_storage(store);
         
@@ -507,7 +509,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         store = init_storage_backend(tile_dir);
         REQUIRE( store != NULL );
         
-        size = store->tile_read(store, "default", 0, 0, 0, buf, 10000, &compressed, err_msg);
+        size = store->tile_read(store, "default", t, 0, 0, 0, buf, 10000, &compressed, err_msg);
         REQUIRE( size < 0 );
         
         store->close_storage(store);
@@ -522,7 +524,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         store = init_storage_backend(tile_dir);
         REQUIRE( store != NULL );
         
-        metaTile tiles("default", 1024, 1024, 10);
+        metaTile tiles("default", t, 1024, 1024, 10);
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < METATILE; xx++) {
                 std::string tile_data = "DEADBEAF";
@@ -545,7 +547,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         store = init_storage_backend(tile_dir);
         REQUIRE( store != NULL );
         
-        metaTile tiles("default", 1024 + METATILE, 1024, 10);
+        metaTile tiles("default", t, 1024 + METATILE, 1024, 10);
         time(&before_write);
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < METATILE; xx++) {
@@ -558,7 +560,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
 
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < METATILE; xx++) {
-                sinfo = store->tile_stat(store, "default", 1024 + METATILE + yy, 1024 + xx, 10);
+                sinfo = store->tile_stat(store, "default", t, 1024 + METATILE + yy, 1024 + xx, 10);
                 REQUIRE( sinfo.size > 0 );
                 REQUIRE( sinfo.expired == 0 );
                 REQUIRE( sinfo.atime > 0 );
@@ -588,7 +590,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         store = init_storage_backend(tile_dir);
         REQUIRE( store != NULL );
         
-        metaTile tiles("default", 1024 + METATILE, 1024, 10);
+        metaTile tiles("default", t, 1024 + METATILE, 1024, 10);
         time(&before_write);
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < METATILE; xx++) {
@@ -602,7 +604,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
 
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < METATILE; xx++) {
-                tile_size = store->tile_read(store, "default", 1024 + METATILE + xx, 1024 + yy, 10, buf, 8195, &compressed, msg);
+                tile_size = store->tile_read(store, "default", t, 1024 + METATILE + xx, 1024 + yy, 10, buf, 8195, &compressed, msg);
                 REQUIRE ( tile_size == 12 );
                 sprintf(buf_tmp, "DEADBEAF %i %i", xx, yy);
                 REQUIRE ( memcmp(buf_tmp, buf, 11) == 0 );
@@ -630,7 +632,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         store = init_storage_backend(tile_dir);
         REQUIRE( store != NULL );
         
-        metaTile tiles("default", 1024 + 2*METATILE, 1024, 10);
+        metaTile tiles("default", t, 1024 + 2*METATILE, 1024, 10);
         time(&before_write);
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < (METATILE >> 1); xx++) {
@@ -644,7 +646,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
 
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < METATILE; xx++) {
-                tile_size = store->tile_read(store, "default", 1024 + 2*METATILE + xx, 1024 + yy, 10, buf, 8195, &compressed, msg);
+                tile_size = store->tile_read(store, "default", t, 1024 + 2*METATILE + xx, 1024 + yy, 10, buf, 8195, &compressed, msg);
                 if (xx >= (METATILE >> 1)) {
                     REQUIRE ( tile_size == 0 );
                 } else {
@@ -673,7 +675,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         store = init_storage_backend(tile_dir);
         REQUIRE( store != NULL );
         
-        metaTile tiles("default", 1024 + 3*METATILE, 1024, 10);
+        metaTile tiles("default", t, 1024 + 3*METATILE, 1024, 10);
 
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < METATILE; xx++) {
@@ -684,13 +686,13 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         }
         tiles.save(store);
 
-        sinfo = store->tile_stat(store, "default", 1024 + 3*METATILE, 1024, 10);
+        sinfo = store->tile_stat(store, "default", t, 1024 + 3*METATILE, 1024, 10);
 
         REQUIRE ( sinfo.size > 0 );
 
-        store->metatile_delete(store, "default", 1024 + 3*METATILE, 1024, 10);
+        store->metatile_delete(store, "default", t, 1024 + 3*METATILE, 1024, 10);
 
-        sinfo = store->tile_stat(store, "default", 1024 + 3*METATILE, 1024, 10);
+        sinfo = store->tile_stat(store, "default", t, 1024 + 3*METATILE, 1024, 10);
 
         REQUIRE ( sinfo.size < 0 );
 
@@ -713,7 +715,7 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         store = init_storage_backend(tile_dir);
         REQUIRE( store != NULL );
         
-        metaTile tiles("default", 1024 + 4*METATILE, 1024, 10);
+        metaTile tiles("default", t, 1024 + 4*METATILE, 1024, 10);
 
         for (int yy = 0; yy < METATILE; yy++) {
             for (int xx = 0; xx < METATILE; xx++) {
@@ -724,13 +726,13 @@ TEST_CASE( "storage-backend", "Tile storage backend" ) {
         }
         tiles.save(store);
 
-        sinfo = store->tile_stat(store, "default", 1024 + 4*METATILE, 1024, 10);
+        sinfo = store->tile_stat(store, "default", t, 1024 + 4*METATILE, 1024, 10);
 
         REQUIRE ( sinfo.size > 0 );
 
-        store->metatile_expire(store, "default", 1024 + 4*METATILE, 1024, 10);
+        store->metatile_expire(store, "default", t, 1024 + 4*METATILE, 1024, 10);
 
-        sinfo = store->tile_stat(store, "default", 1024 + 4*METATILE, 1024, 10);
+        sinfo = store->tile_stat(store, "default", t, 1024 + 4*METATILE, 1024, 10);
 
         REQUIRE ( sinfo.size > 0 );
         REQUIRE ( sinfo.expired > 0 );

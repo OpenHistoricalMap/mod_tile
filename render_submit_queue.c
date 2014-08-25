@@ -153,7 +153,7 @@ static struct protocol * fetch(void) {
     return cmd;
 }
 
-void enqueue(const char *xmlname, int x, int y, int z)
+void enqueue(const char *xmlname, char *t, int x, int y, int z)
 {
     // Add this path in the local render queue
     struct qItem *e = malloc(sizeof(struct qItem));

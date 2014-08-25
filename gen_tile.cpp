@@ -177,7 +177,7 @@ static int check_xyz(char *t, int x, int y, int z, struct xmlmapconfig * map) {
 }
 
 #ifdef METATILE
-static enum protoCmd render(struct xmlmapconfig * map, int x, int y, int z, metaTile &tiles)
+static enum protoCmd render(struct xmlmapconfig * map, char *t, int x, int y, int z, metaTile &tiles)
 {
     int render_size_tx = MIN(METATILE, map->prj->aspect_x * (1 << z));
     int render_size_ty = MIN(METATILE, map->prj->aspect_y * (1 << z));
@@ -337,7 +337,7 @@ void *render_thread(void * arg)
                     if (maps[i].ok) {
                         if (check_xyz(item->t, item->mx, item->my, req->z, &(maps[i]))) {
 
-                            metaTile tiles(req->xmlname, item->mx, item->my, req->z);
+                            metaTile tiles(req->xmlname, item->t, item->mx, item->my, req->z);
 
                             timeval tim;
                             gettimeofday(&tim, NULL);
