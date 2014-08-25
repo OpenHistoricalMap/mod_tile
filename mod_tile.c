@@ -1269,7 +1269,7 @@ static int tile_translate(request_rec *r)
                 return OK;
             }
 
-            n = sscanf(r->uri+strlen(tile_config->baseuri),"%s/%d/%d/%d.%[a-z]/%10s", &(cmd->t), &(cmd->z), &(cmd->x), &(cmd->y), extension, option);
+            n = sscanf(r->uri+strlen(tile_config->baseuri),"%s/%d/%d/%d.%[a-z]/%10s%5s", &cmd->t, &(cmd->z), &(cmd->x), &(cmd->y), extension, option);
             if (n < 4) {
                 ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "tile_translate: Invalid URL for tilelayer %s", tile_config->xmlname);
                 return DECLINED;
